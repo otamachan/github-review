@@ -1,0 +1,53 @@
+/* Syntax highlight - dark theme */
+:root .hljs,
+[data-theme="dark"] .hljs {
+  color: #e6edf3;
+}
+[data-theme="dark"] .hljs-keyword,
+:root .hljs-keyword { color: #ff7b72; }
+[data-theme="dark"] .hljs-string,
+:root .hljs-string { color: #a5d6ff; }
+[data-theme="dark"] .hljs-number,
+:root .hljs-number { color: #79c0ff; }
+[data-theme="dark"] .hljs-comment,
+:root .hljs-comment { color: #8b949e; font-style: italic; }
+[data-theme="dark"] .hljs-function,
+:root .hljs-function { color: #d2a8ff; }
+[data-theme="dark"] .hljs-title,
+:root .hljs-title { color: #d2a8ff; }
+[data-theme="dark"] .hljs-built_in,
+:root .hljs-built_in { color: #ffa657; }
+[data-theme="dark"] .hljs-type,
+:root .hljs-type { color: #ffa657; }
+[data-theme="dark"] .hljs-attr,
+:root .hljs-attr { color: #79c0ff; }
+[data-theme="dark"] .hljs-variable,
+:root .hljs-variable { color: #ffa657; }
+[data-theme="dark"] .hljs-regexp,
+:root .hljs-regexp { color: #a5d6ff; }
+[data-theme="dark"] .hljs-literal,
+:root .hljs-literal { color: #79c0ff; }
+[data-theme="dark"] .hljs-meta,
+:root .hljs-meta { color: #8b949e; }
+[data-theme="dark"] .hljs-tag,
+:root .hljs-tag { color: #7ee787; }
+[data-theme="dark"] .hljs-name,
+:root .hljs-name { color: #7ee787; }
+
+/* Syntax highlight - light theme */
+[data-theme="light"] .hljs { color: #1f2328; }
+[data-theme="light"] .hljs-keyword { color: #cf222e; }
+[data-theme="light"] .hljs-string { color: #0a3069; }
+[data-theme="light"] .hljs-number { color: #0550ae; }
+[data-theme="light"] .hljs-comment { color: #6e7781; font-style: italic; }
+[data-theme="light"] .hljs-function { color: #8250df; }
+[data-theme="light"] .hljs-title { color: #8250df; }
+[data-theme="light"] .hljs-built_in { color: #953800; }
+[data-theme="light"] .hljs-type { color: #953800; }
+[data-theme="light"] .hljs-attr { color: #0550ae; }
+[data-theme="light"] .hljs-variable { color: #953800; }
+[data-theme="light"] .hljs-regexp { color: #0a3069; }
+[data-theme="light"] .hljs-literal { color: #0550ae; }
+[data-theme="light"] .hljs-meta { color: #6e7781; }
+[data-theme="light"] .hljs-tag { color: #116329; }
+[data-theme="light"] .hljs-name { color: #116329; }
