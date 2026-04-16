@@ -12,7 +12,9 @@ export default function ReviewSummary({
   comments: ReviewComment[];
   onClear: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
   const [showPreview, setShowPreview] = useState(false);
   const [showPost, setShowPost] = useState(false);
   const [postBody, setPostBody] = useState("");
@@ -25,10 +27,8 @@ export default function ReviewSummary({
 
   const handleCopy = async () => {
     const ok = await copyToClipboard(markdown);
-    if (ok) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    setCopyState(ok ? "copied" : "failed");
+    setTimeout(() => setCopyState("idle"), 2000);
   };
 
   const handlePost = async (
@@ -76,9 +76,17 @@ export default function ReviewSummary({
           </button>
           <button
             onClick={handleCopy}
-            className="px-3 py-1.5 text-xs rounded bg-[var(--bg-tertiary)] text-[var(--text-primary)] active:opacity-80"
+            className={`px-3 py-1.5 text-xs rounded active:opacity-80 ${
+              copyState === "failed"
+                ? "bg-[var(--diff-del-line)] text-white"
+                : "bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+            }`}
           >
-            {copied ? "Copied" : "Copy"}
+            {copyState === "copied"
+              ? "Copied"
+              : copyState === "failed"
+                ? "Copy failed"
+                : "Copy"}
           </button>
           <button
             onClick={() => setShowPost((v) => !v)}

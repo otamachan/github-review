@@ -11,14 +11,22 @@ export default function TokenInput({ onAuth }: { onAuth: () => void }) {
     const trimmed = value.trim();
     if (!trimmed) return;
 
-    setToken(trimmed);
     try {
       const client = new Octokit({ auth: trimmed });
       await client.users.getAuthenticated();
+      // Persist only after the token is known to be valid, so a transient
+      // network error can't leave a bogus token in localStorage for the
+      // next app load to choke on.
+      setToken(trimmed);
       onAuth();
-    } catch {
-      setError("Authentication failed. Please check your token.");
-      setToken("");
+    } catch (err) {
+      const status = (err as { status?: number } | null)?.status;
+      if (status === 401 || status === 403) {
+        setError("Authentication failed. Please check your token.");
+      } else {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(`Could not reach GitHub: ${message}`);
+      }
     }
   };
 
