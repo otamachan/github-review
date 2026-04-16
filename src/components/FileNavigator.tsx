@@ -81,10 +81,13 @@ export default function FileNavigator({
     }
   };
 
-  // Check if any scrollable ancestor is horizontally scrolled
+  // Only query elements that opt in to horizontal scroll via Tailwind's
+  // `.overflow-x-auto` class. Previously this walked every descendant,
+  // forcing layout reads across the whole DOM subtree on each swipe.
   const isHorizontallyScrolled = useCallback(() => {
     if (!containerRef.current) return false;
-    const scrollables = containerRef.current.querySelectorAll("*");
+    const scrollables =
+      containerRef.current.querySelectorAll(".overflow-x-auto");
     for (const el of scrollables) {
       if (el.scrollWidth > el.clientWidth && el.scrollLeft > 0) {
         return true;
@@ -93,10 +96,10 @@ export default function FileNavigator({
     return false;
   }, []);
 
-  // Check if any scrollable ancestor can scroll further right
   const canScrollRight = useCallback(() => {
     if (!containerRef.current) return false;
-    const scrollables = containerRef.current.querySelectorAll("*");
+    const scrollables =
+      containerRef.current.querySelectorAll(".overflow-x-auto");
     for (const el of scrollables) {
       if (
         el.scrollWidth > el.clientWidth &&
