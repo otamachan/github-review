@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { fetchPRDetail, fetchPRFiles } from "../lib/github";
+import { useState } from "react";
 import { routeToPath } from "../lib/router";
 import type { FileChange, PRItem, ReviewComment, Route } from "../types";
 import DiffView from "./DiffView";
@@ -32,6 +31,10 @@ export default function PRDetail({
   owner,
   repo,
   number,
+  pr,
+  files,
+  loading,
+  error,
   navigate,
   viewed,
   onToggleViewed,
@@ -44,6 +47,10 @@ export default function PRDetail({
   owner: string;
   repo: string;
   number: number;
+  pr: PRItem | null;
+  files: FileChange[];
+  loading: boolean;
+  error: string | null;
   navigate: (route: Route) => void;
   viewed: Set<string>;
   onToggleViewed: (filename: string) => void;
@@ -58,22 +65,15 @@ export default function PRDetail({
   wordWrap: boolean;
   fontSize: number;
 }) {
-  const [pr, setPr] = useState<PRItem | null>(null);
-  const [files, setFiles] = useState<FileChange[]>([]);
-  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "all">("all");
 
-  useEffect(() => {
-    Promise.all([
-      fetchPRDetail(owner, repo, number),
-      fetchPRFiles(owner, repo, number),
-    ])
-      .then(([prData, filesData]) => {
-        setPr(prData);
-        setFiles(filesData);
-      })
-      .finally(() => setLoading(false));
-  }, [owner, repo, number]);
+  if (error) {
+    return (
+      <div className="p-4 text-[var(--diff-del-line)] text-sm">
+        Failed to load PR: {error}
+      </div>
+    );
+  }
 
   if (loading || !pr) {
     return (

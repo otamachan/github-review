@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSwipeable } from "react-swipeable";
 import type { FileChange, ReviewComment } from "../types";
 import DiffView from "./DiffView";
@@ -6,6 +6,8 @@ import DiffView from "./DiffView";
 export default function FileNavigator({
   files,
   initialIndex,
+  loading,
+  error,
   comments,
   onAddComment,
   onRemoveComment,
@@ -16,6 +18,8 @@ export default function FileNavigator({
 }: {
   files: FileChange[];
   initialIndex: number;
+  loading: boolean;
+  error: string | null;
   comments: ReviewComment[];
   onAddComment: (
     filename: string,
@@ -30,6 +34,15 @@ export default function FileNavigator({
   fontSize: number;
 }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  // Keep the view in sync when initialIndex changes (e.g., browser back/forward
+  // to a different file), or clamp when the underlying files list shrinks.
+  useEffect(() => {
+    setCurrentIndex((prev) => {
+      if (initialIndex !== prev) return initialIndex;
+      if (prev >= files.length) return Math.max(0, files.length - 1);
+      return prev;
+    });
+  }, [initialIndex, files.length]);
   const file = files[currentIndex];
   const containerRef = useRef<HTMLDivElement>(null);
   const lastTapRef = useRef<{ time: number; x: number } | null>(null);
@@ -107,6 +120,22 @@ export default function FileNavigator({
     trackMouse: false,
     delta: 50,
   });
+
+  if (error) {
+    return (
+      <div className="p-4 text-[var(--diff-del-line)] text-sm">
+        Failed to load PR: {error}
+      </div>
+    );
+  }
+
+  if (loading && files.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-[var(--text-secondary)]">Loading...</div>
+      </div>
+    );
+  }
 
   if (!file) return null;
 

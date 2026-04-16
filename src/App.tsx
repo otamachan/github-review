@@ -4,18 +4,13 @@ import PRDetail from "./components/PRDetail";
 import PRList from "./components/PRList";
 import ReviewSummary from "./components/ReviewSummary";
 import TokenInput from "./components/TokenInput";
+import { usePRData } from "./hooks/usePRData";
 import { useReviewComments } from "./hooks/useReviewComments";
 import { type Theme, useTheme } from "./hooks/useTheme";
 import { useViewedFiles } from "./hooks/useViewedFiles";
-import {
-  clearToken,
-  fetchPRDetail,
-  fetchPRFiles,
-  getToken,
-  type PRFilter,
-} from "./lib/github";
+import { clearToken, getToken, type PRFilter } from "./lib/github";
 import { pathToRoute, routeToPath } from "./lib/router";
-import type { FileChange, PRItem, Route } from "./types";
+import type { Route } from "./types";
 
 const THEME_LABELS: Record<Theme, string> = {
   dark: "Dark",
@@ -34,8 +29,12 @@ export default function App() {
   const [route, setRouteState] = useState<Route>(() =>
     pathToRoute(window.location.pathname),
   );
-  const [pr, setPr] = useState<PRItem | null>(null);
-  const [files, setFiles] = useState<FileChange[]>([]);
+  const showsPR = route.page === "detail" || route.page === "diff";
+  const { pr, files, loading, error } = usePRData(
+    showsPR && authed ? route.owner : undefined,
+    showsPR && authed ? route.repo : undefined,
+    showsPR && authed ? route.number : undefined,
+  );
   const { comments, addComment, removeComment, clearComments } =
     useReviewComments();
   const { theme, setTheme } = useTheme();
@@ -72,26 +71,13 @@ export default function App() {
     });
   };
 
-  const setRoute = useCallback((r: Route) => {
+  const navigate = useCallback((r: Route) => {
     setRouteState(r);
     const path = routeToPath(r);
     if (window.location.pathname !== path) {
       window.history.pushState({}, "", path);
     }
   }, []);
-
-  const navigate = useCallback(
-    (r: Route) => {
-      setRoute(r);
-      if (r.page === "detail" || r.page === "diff") {
-        if (!pr || pr.number !== r.number) {
-          fetchPRDetail(r.owner, r.repo, r.number).then(setPr);
-          fetchPRFiles(r.owner, r.repo, r.number).then(setFiles);
-        }
-      }
-    },
-    [pr, setRoute],
-  );
 
   // Sync route with browser history (back/forward)
   useEffect(() => {
@@ -103,38 +89,23 @@ export default function App() {
     return () => window.removeEventListener("popstate", handlePop);
   }, []);
 
-  // Load PR/files when route changes (e.g. on direct URL access or back/forward)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `pr` is read but excluded from deps to avoid refetching whenever it changes
-  useEffect(() => {
-    if (route.page === "detail" || route.page === "diff") {
-      if (!authed) return;
-      if (!pr || pr.number !== route.number) {
-        fetchPRDetail(route.owner, route.repo, route.number).then(setPr);
-        fetchPRFiles(route.owner, route.repo, route.number).then(setFiles);
-      }
-    } else {
-      setPr(null);
-      setFiles([]);
-    }
-  }, [route, authed]);
-
   const handleBack = () => {
     if (route.page === "diff") {
-      setRoute({
+      navigate({
         page: "detail",
         owner: route.owner,
         repo: route.repo,
         number: route.number,
       });
     } else if (route.page === "detail") {
-      setRoute({ page: "list" });
+      navigate({ page: "list" });
     }
   };
 
   const handleLogout = () => {
     clearToken();
     setAuthed(false);
-    setRoute({ page: "list" });
+    navigate({ page: "list" });
   };
 
   const cycleTheme = () => {
@@ -213,6 +184,10 @@ export default function App() {
           owner={route.owner}
           repo={route.repo}
           number={route.number}
+          pr={pr}
+          files={files}
+          loading={loading}
+          error={error}
           navigate={navigate}
           viewed={viewed}
           onToggleViewed={toggleViewed}
@@ -223,10 +198,12 @@ export default function App() {
           fontSize={fontSize}
         />
       )}
-      {route.page === "diff" && files.length > 0 && (
+      {route.page === "diff" && (
         <FileNavigator
           files={files}
           initialIndex={route.fileIndex}
+          loading={loading}
+          error={error}
           comments={comments}
           onAddComment={addComment}
           onRemoveComment={removeComment}
