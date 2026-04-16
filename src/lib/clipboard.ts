@@ -1,7 +1,7 @@
-import type { PRItem, ReviewComment } from "../types";
+import type { PRDetail, PRListItem, ReviewComment } from "../types";
 
 export function formatReviewMarkdown(
-  pr: PRItem,
+  pr: PRListItem | PRDetail,
   comments: ReviewComment[],
 ): string {
   if (comments.length === 0) return "";

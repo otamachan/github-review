@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { routeToPath } from "../lib/router";
-import type { FileChange, PRItem, ReviewComment, Route } from "../types";
+import type {
+  FileChange,
+  FileChangeStatus,
+  PRDetail as PRDetailType,
+  ReviewComment,
+  Route,
+} from "../types";
 import DiffView from "./DiffView";
 
-function statusIcon(status: string): string {
+function statusIcon(status: FileChangeStatus): string {
   switch (status) {
     case "added":
       return "+";
@@ -16,7 +22,7 @@ function statusIcon(status: string): string {
   }
 }
 
-function statusColor(status: string): string {
+function statusColor(status: FileChangeStatus): string {
   switch (status) {
     case "added":
       return "var(--diff-add-line)";
@@ -47,7 +53,7 @@ export default function PRDetail({
   owner: string;
   repo: string;
   number: number;
-  pr: PRItem | null;
+  pr: PRDetailType | null;
   files: FileChange[];
   loading: boolean;
   error: string | null;
@@ -107,10 +113,14 @@ export default function PRDetail({
           <span>{pr.base.ref}</span>
         </div>
         <div className="flex gap-4 mt-2 text-xs">
-          <span className="text-[var(--diff-add-line)]">+{pr.additions}</span>
-          <span className="text-[var(--diff-del-line)]">-{pr.deletions}</span>
+          <span className="text-[var(--diff-add-line)]">
+            +{pr.stats.additions}
+          </span>
+          <span className="text-[var(--diff-del-line)]">
+            -{pr.stats.deletions}
+          </span>
           <span className="text-[var(--text-secondary)]">
-            {pr.changed_files} files
+            {pr.stats.changed_files} files
           </span>
           <span className="text-[var(--text-secondary)]">
             ({viewed.size}/{files.length} viewed)

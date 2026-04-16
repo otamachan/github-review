@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { fetchPRDetail, fetchPRFiles } from "../lib/github";
-import type { FileChange, PRItem } from "../types";
+import type { FileChange, PRDetail } from "../types";
 
 export interface PRData {
-  pr: PRItem | null;
+  pr: PRDetail | null;
   files: FileChange[];
   loading: boolean;
   error: string | null;
@@ -14,7 +14,7 @@ export function usePRData(
   repo: string | undefined,
   number: number | undefined,
 ): PRData {
-  const [pr, setPr] = useState<PRItem | null>(null);
+  const [pr, setPr] = useState<PRDetail | null>(null);
   const [files, setFiles] = useState<FileChange[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

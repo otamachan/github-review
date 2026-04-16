@@ -1,5 +1,13 @@
 import { Octokit } from "@octokit/rest";
-import type { FileChange, PRItem, ReviewComment } from "../types";
+import type {
+  FileChange,
+  FileChangeStatus,
+  PRDetail,
+  PRListItem,
+  PRState,
+  PRStats,
+  ReviewComment,
+} from "../types";
 
 const TOKEN_KEY = "github-review-pat";
 
@@ -10,6 +18,26 @@ function sanitizeLabelColor(color: string | null | undefined): string {
   // GitHub labels are supposed to be 6-hex, but we render the value directly
   // into a CSS string — validate so a malformed value can't break layout.
   return color && HEX_COLOR.test(color) ? color : DEFAULT_LABEL_COLOR;
+}
+
+function narrowPRState(state: string): PRState {
+  return state === "closed" ? "closed" : "open";
+}
+
+const FILE_CHANGE_STATUSES: readonly FileChangeStatus[] = [
+  "added",
+  "removed",
+  "modified",
+  "renamed",
+  "copied",
+  "changed",
+  "unchanged",
+];
+
+function narrowFileChangeStatus(s: string): FileChangeStatus {
+  return (FILE_CHANGE_STATUSES as readonly string[]).includes(s)
+    ? (s as FileChangeStatus)
+    : "modified";
 }
 
 export function getToken(): string | null {
@@ -32,7 +60,9 @@ function createClient(): Octokit {
 
 export type PRFilter = "mine" | "review";
 
-export async function fetchMyPRs(filter: PRFilter = "mine"): Promise<PRItem[]> {
+export async function fetchMyPRs(
+  filter: PRFilter = "mine",
+): Promise<PRListItem[]> {
   const client = createClient();
   const user = await client.users.getAuthenticated();
   const login = user.data.login;
@@ -50,7 +80,7 @@ export async function fetchMyPRs(filter: PRFilter = "mine"): Promise<PRItem[]> {
   });
 
   const seen = new Set<number>();
-  const all: PRItem[] = [];
+  const all: PRListItem[] = [];
 
   for (const item of result.data.items) {
     if (seen.has(item.id)) continue;
@@ -65,7 +95,7 @@ export async function fetchMyPRs(filter: PRFilter = "mine"): Promise<PRItem[]> {
       id: item.id,
       number: item.number,
       title: item.title,
-      state: item.state,
+      state: narrowPRState(item.state),
       draft: item.draft ?? false,
       user: {
         login: item.user?.login ?? "",
@@ -73,18 +103,14 @@ export async function fetchMyPRs(filter: PRFilter = "mine"): Promise<PRItem[]> {
       },
       created_at: item.created_at,
       updated_at: item.updated_at,
-      additions: 0,
-      deletions: 0,
-      changed_files: 0,
       html_url: item.html_url,
       body: item.body ?? null,
       labels: (item.labels ?? []).map((l) => ({
         name: typeof l === "string" ? l : (l.name ?? ""),
         color: sanitizeLabelColor(typeof l === "string" ? null : l.color),
       })),
-      head: { ref: "" },
-      base: { ref: "" },
       repo: { owner, name: repo, full_name: `${owner}/${repo}` },
+      stats: null,
     });
   }
 
@@ -100,7 +126,7 @@ export async function fetchPRStats(
   owner: string,
   repo: string,
   number: number,
-): Promise<{ additions: number; deletions: number; changed_files: number }> {
+): Promise<PRStats> {
   const client = createClient();
   const { data } = await client.pulls.get({ owner, repo, pull_number: number });
   return {
@@ -114,14 +140,14 @@ export async function fetchPRDetail(
   owner: string,
   repo: string,
   number: number,
-): Promise<PRItem> {
+): Promise<PRDetail> {
   const client = createClient();
   const { data } = await client.pulls.get({ owner, repo, pull_number: number });
   return {
     id: data.id,
     number: data.number,
     title: data.title,
-    state: data.state,
+    state: narrowPRState(data.state),
     draft: data.draft ?? false,
     user: {
       login: data.user?.login ?? "",
@@ -129,9 +155,11 @@ export async function fetchPRDetail(
     },
     created_at: data.created_at,
     updated_at: data.updated_at,
-    additions: data.additions,
-    deletions: data.deletions,
-    changed_files: data.changed_files,
+    stats: {
+      additions: data.additions,
+      deletions: data.deletions,
+      changed_files: data.changed_files,
+    },
     html_url: data.html_url,
     body: data.body,
     labels: (data.labels ?? []).map((l) => ({
@@ -164,7 +192,7 @@ export async function fetchPRFiles(
   });
   return data.map((f) => ({
     filename: f.filename,
-    status: f.status,
+    status: narrowFileChangeStatus(f.status),
     additions: f.additions,
     deletions: f.deletions,
     patch: f.patch,

@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { copyToClipboard, formatReviewMarkdown } from "../lib/clipboard";
 import { postReview } from "../lib/github";
-import type { PRItem, ReviewComment } from "../types";
+import type { PRDetail, PRListItem, ReviewComment } from "../types";
 
+// Accepts either a list item or a fully loaded detail — we only read
+// identifying fields and the title.
 export default function ReviewSummary({
   pr,
   comments,
   onClear,
 }: {
-  pr: PRItem;
+  pr: PRListItem | PRDetail;
   comments: ReviewComment[];
   onClear: () => void;
 }) {

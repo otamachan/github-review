@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchMyPRs, fetchPRStats, type PRFilter } from "../lib/github";
 import { routeToPath } from "../lib/router";
-import type { PRItem, Route } from "../types";
+import type { PRListItem, PRStats, Route } from "../types";
 
 export type { PRFilter };
 
@@ -18,7 +18,7 @@ function timeAgo(dateStr: string): string {
 const CACHE_KEY = "github-review-prlist-cache";
 const STATS_CONCURRENCY = 3;
 
-function isValidCachedPR(v: unknown): v is PRItem {
+function isValidCachedPR(v: unknown): v is PRListItem {
   if (!v || typeof v !== "object") return false;
   const r = v as Record<string, unknown>;
   const repo = r.repo as Record<string, unknown> | undefined;
@@ -28,11 +28,12 @@ function isValidCachedPR(v: unknown): v is PRItem {
     typeof r.title === "string" &&
     !!repo &&
     typeof repo.owner === "string" &&
-    typeof repo.name === "string"
+    typeof repo.name === "string" &&
+    "stats" in r
   );
 }
 
-function loadCache(filter: PRFilter): PRItem[] | null {
+function loadCache(filter: PRFilter): PRListItem[] | null {
   try {
     const raw = localStorage.getItem(`${CACHE_KEY}-${filter}`);
     if (!raw) return null;
@@ -48,7 +49,7 @@ function loadCache(filter: PRFilter): PRItem[] | null {
   }
 }
 
-function saveCache(filter: PRFilter, prs: PRItem[]) {
+function saveCache(filter: PRFilter, prs: PRListItem[]) {
   try {
     localStorage.setItem(`${CACHE_KEY}-${filter}`, JSON.stringify(prs));
   } catch {
@@ -60,13 +61,10 @@ function saveCache(filter: PRFilter, prs: PRItem[]) {
 // Fetch stats for each PR with bounded concurrency so we don't fire N
 // simultaneous requests into GitHub's secondary rate limit.
 async function fetchStatsPool(
-  prs: PRItem[],
+  prs: PRListItem[],
   limit: number,
-  onStats: (
-    pr: PRItem,
-    stats: { additions: number; deletions: number; changed_files: number },
-  ) => void,
-  onError: (pr: PRItem, message: string) => void,
+  onStats: (pr: PRListItem, stats: PRStats) => void,
+  onError: (pr: PRListItem, message: string) => void,
   isCancelled: () => boolean,
 ) {
   let index = 0;
@@ -100,7 +98,7 @@ export default function PRList({
   filter: PRFilter;
   setFilter: (f: PRFilter) => void;
 }) {
-  const [prs, setPrs] = useState<PRItem[]>(() => loadCache(filter) ?? []);
+  const [prs, setPrs] = useState<PRListItem[]>(() => loadCache(filter) ?? []);
   const [loading, setLoading] = useState(() => loadCache(filter) === null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -124,16 +122,9 @@ export default function PRList({
         if (cancelled) return;
         // Preserve previously fetched stats when PR id matches
         const prevMap = new Map(cached?.map((p) => [p.id, p]));
-        const merged = list.map((pr) => {
+        const merged: PRListItem[] = list.map((pr) => {
           const prev = prevMap.get(pr.id);
-          return prev
-            ? {
-                ...pr,
-                additions: prev.additions,
-                deletions: prev.deletions,
-                changed_files: prev.changed_files,
-              }
-            : pr;
+          return prev?.stats ? { ...pr, stats: prev.stats } : pr;
         });
         setPrs(merged);
         setLoading(false);
@@ -150,7 +141,7 @@ export default function PRList({
           (pr, stats) => {
             setPrs((prev) => {
               const next = prev.map((p) =>
-                p.id === pr.id ? { ...p, ...stats } : p,
+                p.id === pr.id ? { ...p, stats } : p,
               );
               saveCache(filter, next);
               return next;
@@ -275,13 +266,13 @@ export default function PRList({
                       Draft
                     </span>
                   )}
-                  {(pr.additions > 0 || pr.deletions > 0) && (
+                  {pr.stats && (
                     <>
                       <span className="text-[var(--diff-add-line)]">
-                        +{pr.additions}
+                        +{pr.stats.additions}
                       </span>
                       <span className="text-[var(--diff-del-line)]">
-                        -{pr.deletions}
+                        -{pr.stats.deletions}
                       </span>
                     </>
                   )}
