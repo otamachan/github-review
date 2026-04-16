@@ -44,3 +44,7 @@ npm run preview
 ## Deployment
 
 The app is built as a static site with `base: "/github-review/"` and is intended to be hosted on GitHub Pages. `404.html` is generated from `index.html` at build time so that direct URL access works for client-side routing.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
