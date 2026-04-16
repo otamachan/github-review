@@ -145,7 +145,9 @@ export async function fetchPRFiles(
   number: number,
 ): Promise<FileChange[]> {
   const client = createClient();
-  const { data } = await client.pulls.listFiles({
+  // Paginate so large PRs (>100 changed files) are fully loaded instead of
+  // silently truncated. GitHub caps listFiles at 3000 total files per PR.
+  const data = await client.paginate(client.pulls.listFiles, {
     owner,
     repo,
     pull_number: number,

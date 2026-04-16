@@ -16,12 +16,33 @@ function timeAgo(dateStr: string): string {
 }
 
 const CACHE_KEY = "github-review-prlist-cache";
+const STATS_CONCURRENCY = 3;
+
+function isValidCachedPR(v: unknown): v is PRItem {
+  if (!v || typeof v !== "object") return false;
+  const r = v as Record<string, unknown>;
+  const repo = r.repo as Record<string, unknown> | undefined;
+  return (
+    typeof r.id === "number" &&
+    typeof r.number === "number" &&
+    typeof r.title === "string" &&
+    !!repo &&
+    typeof repo.owner === "string" &&
+    typeof repo.name === "string"
+  );
+}
 
 function loadCache(filter: PRFilter): PRItem[] | null {
   try {
     const raw = localStorage.getItem(`${CACHE_KEY}-${filter}`);
     if (!raw) return null;
-    return JSON.parse(raw) as PRItem[];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed) || !parsed.every(isValidCachedPR)) {
+      // Stale or mismatched schema — discard so we don't crash later.
+      localStorage.removeItem(`${CACHE_KEY}-${filter}`);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -31,8 +52,43 @@ function saveCache(filter: PRFilter, prs: PRItem[]) {
   try {
     localStorage.setItem(`${CACHE_KEY}-${filter}`, JSON.stringify(prs));
   } catch {
-    // Ignore quota errors
+    // Cache writes are best-effort: localStorage quota exceeded is non-fatal,
+    // the next reload simply refetches from the API.
   }
+}
+
+// Fetch stats for each PR with bounded concurrency so we don't fire N
+// simultaneous requests into GitHub's secondary rate limit.
+async function fetchStatsPool(
+  prs: PRItem[],
+  limit: number,
+  onStats: (
+    pr: PRItem,
+    stats: { additions: number; deletions: number; changed_files: number },
+  ) => void,
+  onError: (pr: PRItem, message: string) => void,
+  isCancelled: () => boolean,
+) {
+  let index = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, prs.length) }, async () => {
+      while (index < prs.length && !isCancelled()) {
+        const pr = prs[index++]!;
+        try {
+          const stats = await fetchPRStats(
+            pr.repo.owner,
+            pr.repo.name,
+            pr.number,
+          );
+          if (isCancelled()) return;
+          onStats(pr, stats);
+        } catch (e) {
+          if (isCancelled()) return;
+          onError(pr, e instanceof Error ? e.message : String(e));
+        }
+      }
+    }),
+  );
 }
 
 export default function PRList({
@@ -84,21 +140,29 @@ export default function PRList({
         setRefreshing(false);
         saveCache(filter, merged);
 
-        // Lazy-fetch stats in background; update each PR when ready.
-        for (const pr of merged) {
-          fetchPRStats(pr.repo.owner, pr.repo.name, pr.number)
-            .then((stats) => {
-              if (cancelled) return;
-              setPrs((prev) => {
-                const next = prev.map((p) =>
-                  p.id === pr.id ? { ...p, ...stats } : p,
-                );
-                saveCache(filter, next);
-                return next;
-              });
-            })
-            .catch(() => {});
-        }
+        // Lazy-fetch stats in background with bounded concurrency; per-PR
+        // failures are isolated so a rate-limit on one request doesn't
+        // cascade to the rest. Errors are logged rather than silently
+        // swallowed so they're at least observable in the console.
+        void fetchStatsPool(
+          merged,
+          STATS_CONCURRENCY,
+          (pr, stats) => {
+            setPrs((prev) => {
+              const next = prev.map((p) =>
+                p.id === pr.id ? { ...p, ...stats } : p,
+              );
+              saveCache(filter, next);
+              return next;
+            });
+          },
+          (pr, message) => {
+            console.warn(
+              `[github-review] failed to fetch stats for ${pr.repo.full_name}#${pr.number}: ${message}`,
+            );
+          },
+          () => cancelled,
+        );
       })
       .catch((e) => {
         if (cancelled) return;
