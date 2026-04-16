@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { PRItem, ReviewComment } from "../types";
-import { formatReviewMarkdown, copyToClipboard } from "../lib/clipboard";
+import { copyToClipboard, formatReviewMarkdown } from "../lib/clipboard";
 import { postReview } from "../lib/github";
+import type { PRItem, ReviewComment } from "../types";
 
 export default function ReviewSummary({
   pr,
@@ -31,7 +31,9 @@ export default function ReviewSummary({
     }
   };
 
-  const handlePost = async (event: "COMMENT" | "APPROVE" | "REQUEST_CHANGES") => {
+  const handlePost = async (
+    event: "COMMENT" | "APPROVE" | "REQUEST_CHANGES",
+  ) => {
     setPosting(true);
     setPostError("");
     try {
@@ -60,7 +62,9 @@ export default function ReviewSummary({
           onClick={() => setShowPreview((v) => !v)}
           className="text-sm text-[var(--text-secondary)] active:opacity-80 flex items-center gap-1"
         >
-          <span>{comments.length} comment{comments.length === 1 ? "" : "s"}</span>
+          <span>
+            {comments.length} comment{comments.length === 1 ? "" : "s"}
+          </span>
           <span className="text-xs">{showPreview ? "▼" : "▶"}</span>
         </button>
         <div className="flex gap-2">
@@ -103,7 +107,9 @@ export default function ReviewSummary({
             className="w-full bg-[var(--bg-primary)] text-xs text-[var(--text-primary)] rounded p-2 outline-none resize-none border border-[var(--border)] focus:border-[var(--accent)]"
           />
           {postError && (
-            <p className="mt-1 text-[var(--diff-del-line)] text-xs">{postError}</p>
+            <p className="mt-1 text-[var(--diff-del-line)] text-xs">
+              {postError}
+            </p>
           )}
           <div className="flex gap-1 mt-2">
             <button

@@ -1,21 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
-import type { Route, PRItem, FileChange } from "./types";
+import { useCallback, useEffect, useState } from "react";
+import FileNavigator from "./components/FileNavigator";
+import PRDetail from "./components/PRDetail";
+import PRList from "./components/PRList";
+import ReviewSummary from "./components/ReviewSummary";
+import TokenInput from "./components/TokenInput";
+import { useReviewComments } from "./hooks/useReviewComments";
+import { type Theme, useTheme } from "./hooks/useTheme";
+import { useViewedFiles } from "./hooks/useViewedFiles";
 import {
-  getToken,
   clearToken,
   fetchPRDetail,
   fetchPRFiles,
+  getToken,
   type PRFilter,
 } from "./lib/github";
-import { useReviewComments } from "./hooks/useReviewComments";
-import { useTheme, type Theme } from "./hooks/useTheme";
-import { useViewedFiles } from "./hooks/useViewedFiles";
-import { routeToPath, pathToRoute } from "./lib/router";
-import TokenInput from "./components/TokenInput";
-import PRList from "./components/PRList";
-import PRDetail from "./components/PRDetail";
-import FileNavigator from "./components/FileNavigator";
-import ReviewSummary from "./components/ReviewSummary";
+import { pathToRoute, routeToPath } from "./lib/router";
+import type { FileChange, PRItem, Route } from "./types";
 
 const THEME_LABELS: Record<Theme, string> = {
   dark: "Dark",
@@ -45,7 +45,9 @@ export default function App() {
   });
   const [fontSize, setFontSize] = useState<number>(() => {
     const stored = parseInt(localStorage.getItem(FONT_SIZE_KEY) ?? "", 10);
-    return Number.isFinite(stored) && stored >= MIN_FONT_SIZE && stored <= MAX_FONT_SIZE
+    return Number.isFinite(stored) &&
+      stored >= MIN_FONT_SIZE &&
+      stored <= MAX_FONT_SIZE
       ? stored
       : 12;
   });
@@ -53,7 +55,10 @@ export default function App() {
 
   const adjustFontSize = (delta: number) => {
     setFontSize((prev) => {
-      const next = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, prev + delta));
+      const next = Math.min(
+        MAX_FONT_SIZE,
+        Math.max(MIN_FONT_SIZE, prev + delta),
+      );
       localStorage.setItem(FONT_SIZE_KEY, String(next));
       return next;
     });
@@ -99,6 +104,7 @@ export default function App() {
   }, []);
 
   // Load PR/files when route changes (e.g. on direct URL access or back/forward)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `pr` is read but excluded from deps to avoid refetching whenever it changes
   useEffect(() => {
     if (route.page === "detail" || route.page === "diff") {
       if (!authed) return;
@@ -110,7 +116,6 @@ export default function App() {
       setPr(null);
       setFiles([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route, authed]);
 
   const handleBack = () => {
@@ -234,11 +239,7 @@ export default function App() {
 
       {/* Review summary bar */}
       {pr && route.page !== "list" && (
-        <ReviewSummary
-          pr={pr}
-          comments={comments}
-          onClear={clearComments}
-        />
+        <ReviewSummary pr={pr} comments={comments} onClear={clearComments} />
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { PRItem, Route } from "../types";
 import { fetchMyPRs, fetchPRStats, type PRFilter } from "../lib/github";
 import { routeToPath } from "../lib/router";
+import type { PRItem, Route } from "../types";
 
 export type { PRFilter };
 
@@ -163,63 +163,66 @@ export default function PRList({
               number: pr.number,
             };
             return (
-            <a
-              key={pr.id}
-              href={routeToPath(route)}
-              onClick={(e) => {
-                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-                e.preventDefault();
-                navigate(route);
-              }}
-              className="block w-full text-left px-4 py-3 active:bg-[var(--bg-tertiary)] transition-colors text-inherit no-underline"
-            >
-              <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] mb-1">
-                <span>{pr.repo.full_name}</span>
-                <span>#{pr.number}</span>
-                <span className="ml-auto">{timeAgo(pr.updated_at)}</span>
-              </div>
-              <div className="text-sm font-medium leading-snug">{pr.title}</div>
-              {pr.labels.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {pr.labels.map((label) => (
-                    <span
-                      key={label.name}
-                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                      style={{
-                        backgroundColor: `#${label.color}33`,
-                        color: `#${label.color}`,
-                        border: `1px solid #${label.color}66`,
-                      }}
-                    >
-                      {label.name}
-                    </span>
-                  ))}
+              <a
+                key={pr.id}
+                href={routeToPath(route)}
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)
+                    return;
+                  e.preventDefault();
+                  navigate(route);
+                }}
+                className="block w-full text-left px-4 py-3 active:bg-[var(--bg-tertiary)] transition-colors text-inherit no-underline"
+              >
+                <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] mb-1">
+                  <span>{pr.repo.full_name}</span>
+                  <span>#{pr.number}</span>
+                  <span className="ml-auto">{timeAgo(pr.updated_at)}</span>
                 </div>
-              )}
-              <div className="flex items-center gap-3 mt-1 text-xs text-[var(--text-secondary)]">
-                <img
-                  src={pr.user.avatar_url}
-                  alt=""
-                  className="w-4 h-4 rounded-full"
-                />
-                <span>{pr.user.login}</span>
-                {pr.draft && (
-                  <span className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
-                    Draft
-                  </span>
+                <div className="text-sm font-medium leading-snug">
+                  {pr.title}
+                </div>
+                {pr.labels.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {pr.labels.map((label) => (
+                      <span
+                        key={label.name}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                        style={{
+                          backgroundColor: `#${label.color}33`,
+                          color: `#${label.color}`,
+                          border: `1px solid #${label.color}66`,
+                        }}
+                      >
+                        {label.name}
+                      </span>
+                    ))}
+                  </div>
                 )}
-                {(pr.additions > 0 || pr.deletions > 0) && (
-                  <>
-                    <span className="text-[var(--diff-add-line)]">
-                      +{pr.additions}
+                <div className="flex items-center gap-3 mt-1 text-xs text-[var(--text-secondary)]">
+                  <img
+                    src={pr.user.avatar_url}
+                    alt=""
+                    className="w-4 h-4 rounded-full"
+                  />
+                  <span>{pr.user.login}</span>
+                  {pr.draft && (
+                    <span className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
+                      Draft
                     </span>
-                    <span className="text-[var(--diff-del-line)]">
-                      -{pr.deletions}
-                    </span>
-                  </>
-                )}
-              </div>
-            </a>
+                  )}
+                  {(pr.additions > 0 || pr.deletions > 0) && (
+                    <>
+                      <span className="text-[var(--diff-add-line)]">
+                        +{pr.additions}
+                      </span>
+                      <span className="text-[var(--diff-del-line)]">
+                        -{pr.deletions}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </a>
             );
           })}
         </div>

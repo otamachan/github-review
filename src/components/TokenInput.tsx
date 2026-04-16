@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Octokit } from "@octokit/rest";
+import { useState } from "react";
 import { setToken } from "../lib/github";
 
 export default function TokenInput({ onAuth }: { onAuth: () => void }) {
@@ -58,7 +58,9 @@ export default function TokenInput({ onAuth }: { onAuth: () => void }) {
           className="w-full px-3 py-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] text-base outline-none focus:border-[var(--accent)]"
           autoFocus
         />
-        {error && <p className="text-[var(--diff-del-line)] text-sm">{error}</p>}
+        {error && (
+          <p className="text-[var(--diff-del-line)] text-sm">{error}</p>
+        )}
         <button
           type="submit"
           className="w-full py-3 rounded-lg bg-[var(--accent)] text-white font-medium text-base active:opacity-80"

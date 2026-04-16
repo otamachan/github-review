@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useSwipeable } from "react-swipeable";
 import type { FileChange, ReviewComment } from "../types";
 import DiffView from "./DiffView";
@@ -85,7 +85,10 @@ export default function FileNavigator({
     if (!containerRef.current) return false;
     const scrollables = containerRef.current.querySelectorAll("*");
     for (const el of scrollables) {
-      if (el.scrollWidth > el.clientWidth && el.scrollLeft + el.clientWidth < el.scrollWidth - 1) {
+      if (
+        el.scrollWidth > el.clientWidth &&
+        el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+      ) {
         return true;
       }
     }
@@ -108,7 +111,12 @@ export default function FileNavigator({
   if (!file) return null;
 
   return (
-    <div {...handlers} ref={containerRef} onPointerUp={handleTap} className="min-h-screen">
+    <div
+      {...handlers}
+      ref={containerRef}
+      onPointerUp={handleTap}
+      className="min-h-screen"
+    >
       {/* File indicator */}
       <div className="sticky top-[44px] z-10 flex items-center justify-between px-3 py-1.5 bg-[var(--bg-primary)] border-b border-[var(--border)]">
         <button
@@ -122,9 +130,7 @@ export default function FileNavigator({
           ←
         </button>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onToggleViewed(file.filename)}
-          >
+          <button onClick={() => onToggleViewed(file.filename)}>
             <div
               className={`w-4 h-4 rounded border ${
                 viewed.has(file.filename)
@@ -143,8 +149,7 @@ export default function FileNavigator({
         </div>
         <button
           onClick={() =>
-            currentIndex < files.length - 1 &&
-            setCurrentIndex(currentIndex + 1)
+            currentIndex < files.length - 1 && setCurrentIndex(currentIndex + 1)
           }
           className={`px-2 py-1 rounded text-sm ${
             currentIndex < files.length - 1

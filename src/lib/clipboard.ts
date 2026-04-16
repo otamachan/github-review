@@ -1,4 +1,4 @@
-import type { ReviewComment, PRItem } from "../types";
+import type { PRItem, ReviewComment } from "../types";
 
 export function formatReviewMarkdown(
   pr: PRItem,

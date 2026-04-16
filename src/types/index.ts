@@ -43,4 +43,10 @@ export interface ReviewComment {
 export type Route =
   | { page: "list" }
   | { page: "detail"; owner: string; repo: string; number: number }
-  | { page: "diff"; owner: string; repo: string; number: number; fileIndex: number };
+  | {
+      page: "diff";
+      owner: string;
+      repo: string;
+      number: number;
+      fileIndex: number;
+    };

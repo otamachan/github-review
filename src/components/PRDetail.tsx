@@ -1,23 +1,30 @@
 import { useEffect, useState } from "react";
-import type { PRItem, FileChange, Route, ReviewComment } from "../types";
 import { fetchPRDetail, fetchPRFiles } from "../lib/github";
 import { routeToPath } from "../lib/router";
+import type { FileChange, PRItem, ReviewComment, Route } from "../types";
 import DiffView from "./DiffView";
 
 function statusIcon(status: string): string {
   switch (status) {
-    case "added": return "+";
-    case "removed": return "-";
-    case "renamed": return "R";
-    default: return "M";
+    case "added":
+      return "+";
+    case "removed":
+      return "-";
+    case "renamed":
+      return "R";
+    default:
+      return "M";
   }
 }
 
 function statusColor(status: string): string {
   switch (status) {
-    case "added": return "var(--diff-add-line)";
-    case "removed": return "var(--diff-del-line)";
-    default: return "var(--text-secondary)";
+    case "added":
+      return "var(--diff-add-line)";
+    case "removed":
+      return "var(--diff-del-line)";
+    default:
+      return "var(--text-secondary)";
   }
 }
 
@@ -81,7 +88,9 @@ export default function PRDetail({
       {/* PR info */}
       <div className="px-4 py-3 border-b border-[var(--border)]">
         <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] mb-1">
-          <span>{owner}/{repo}#{number}</span>
+          <span>
+            {owner}/{repo}#{number}
+          </span>
           <a
             href={pr.html_url}
             target="_blank"
@@ -175,7 +184,8 @@ export default function PRDetail({
                   fileIndex: i,
                 })}
                 onClick={(e) => {
-                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)
+                    return;
                   e.preventDefault();
                   navigate({ page: "diff", owner, repo, number, fileIndex: i });
                 }}
@@ -196,10 +206,14 @@ export default function PRDetail({
                 </div>
                 <div className="flex gap-3 ml-6 mt-1 text-xs">
                   {file.additions > 0 && (
-                    <span className="text-[var(--diff-add-line)]">+{file.additions}</span>
+                    <span className="text-[var(--diff-add-line)]">
+                      +{file.additions}
+                    </span>
                   )}
                   {file.deletions > 0 && (
-                    <span className="text-[var(--diff-del-line)]">-{file.deletions}</span>
+                    <span className="text-[var(--diff-del-line)]">
+                      -{file.deletions}
+                    </span>
                   )}
                 </div>
               </a>
@@ -210,7 +224,10 @@ export default function PRDetail({
         /* All diffs scrollable */
         <div>
           {files.map((file) => (
-            <div key={file.filename} className="border-b border-[var(--border)]">
+            <div
+              key={file.filename}
+              className="border-b border-[var(--border)]"
+            >
               {/* File header with checkbox */}
               <div className="sticky top-[44px] z-10 flex items-center gap-2 px-3 py-2 bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <button
@@ -229,7 +246,9 @@ export default function PRDetail({
                     )}
                   </div>
                 </button>
-                <span className="font-medium mono text-xs truncate">{file.filename}</span>
+                <span className="font-medium mono text-xs truncate">
+                  {file.filename}
+                </span>
               </div>
               {file.patch ? (
                 <DiffView

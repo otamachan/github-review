@@ -1,5 +1,5 @@
 import { Octokit } from "@octokit/rest";
-import type { PRItem, FileChange, ReviewComment } from "../types";
+import type { FileChange, PRItem, ReviewComment } from "../types";
 
 const TOKEN_KEY = "github-review-pat";
 
@@ -80,7 +80,8 @@ export async function fetchMyPRs(filter: PRFilter = "mine"): Promise<PRItem[]> {
   }
 
   all.sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
   );
 
   return all;
