@@ -176,7 +176,10 @@ export default function DiffView({
     line: number;
     side: "LEFT" | "RIGHT";
   } | null>(null);
-  const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
+  // Regions the user has explicitly expanded. Empty set means every
+  // collapsible region starts collapsed, which matches the previous behavior
+  // without needing to sync state with `regions` on every re-render.
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
   const lang = useMemo(() => detectLanguage(filename), [filename]);
   const lines = useMemo(() => parsePatch(patch), [patch]);
@@ -222,20 +225,11 @@ export default function DiffView({
     return result;
   }, [lines]);
 
-  useMemo(() => {
-    const initial = new Set<number>();
-    for (const r of regions) {
-      initial.add(r.start);
-    }
-    setCollapsed(initial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [regions]);
-
   const fileComments = comments.filter((c) => c.filename === filename);
 
   const isHidden = (index: number): boolean => {
     for (const r of regions) {
-      if (collapsed.has(r.start) && index >= r.start && index < r.end)
+      if (!expanded.has(r.start) && index >= r.start && index < r.end)
         return true;
     }
     return false;
@@ -268,14 +262,14 @@ export default function DiffView({
             if (isHidden(i)) return null;
 
             const region = getCollapseRegion(i);
-            if (region && collapsed.has(region.start)) {
+            if (region && !expanded.has(region.start)) {
               return (
                 <button
                   key={`collapse-${i}`}
                   onClick={() => {
-                    setCollapsed((prev) => {
+                    setExpanded((prev) => {
                       const next = new Set(prev);
-                      next.delete(region.start);
+                      next.add(region.start);
                       return next;
                     });
                   }}
