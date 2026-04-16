@@ -26,11 +26,13 @@ export function pathToRoute(path: string): Route {
     const owner = parts[0]!;
     const repo = parts[1]!;
     const number = parseInt(parts[3]!, 10);
-    if (!Number.isFinite(number)) return { page: "list" };
+    // Require a positive integer PR number; reject negative/NaN/0 that would
+    // produce a malformed API call on fetch.
+    if (!Number.isFinite(number) || number <= 0) return { page: "list" };
 
     if (parts[4] === "files" && parts.length >= 6) {
       const fileIndex = parseInt(parts[5]!, 10);
-      if (Number.isFinite(fileIndex)) {
+      if (Number.isFinite(fileIndex) && fileIndex >= 0) {
         return { page: "diff", owner, repo, number, fileIndex };
       }
     }

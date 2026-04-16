@@ -3,6 +3,15 @@ import type { FileChange, PRItem, ReviewComment } from "../types";
 
 const TOKEN_KEY = "github-review-pat";
 
+const DEFAULT_LABEL_COLOR = "8b949e";
+const HEX_COLOR = /^[0-9a-fA-F]{6}$/;
+
+function sanitizeLabelColor(color: string | null | undefined): string {
+  // GitHub labels are supposed to be 6-hex, but we render the value directly
+  // into a CSS string — validate so a malformed value can't break layout.
+  return color && HEX_COLOR.test(color) ? color : DEFAULT_LABEL_COLOR;
+}
+
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -71,7 +80,7 @@ export async function fetchMyPRs(filter: PRFilter = "mine"): Promise<PRItem[]> {
       body: item.body ?? null,
       labels: (item.labels ?? []).map((l) => ({
         name: typeof l === "string" ? l : (l.name ?? ""),
-        color: typeof l === "string" ? "8b949e" : (l.color ?? "8b949e"),
+        color: sanitizeLabelColor(typeof l === "string" ? null : l.color),
       })),
       head: { ref: "" },
       base: { ref: "" },
@@ -127,7 +136,7 @@ export async function fetchPRDetail(
     body: data.body,
     labels: (data.labels ?? []).map((l) => ({
       name: l.name ?? "",
-      color: l.color ?? "8b949e",
+      color: sanitizeLabelColor(l.color),
     })),
     head: { ref: data.head.ref },
     base: { ref: data.base.ref },

@@ -3,6 +3,11 @@ import { useCallback, useEffect, useState } from "react";
 export type Theme = "dark" | "light" | "system";
 
 const THEME_KEY = "github-review-theme";
+const THEMES: readonly Theme[] = ["dark", "light", "system"];
+
+function isTheme(v: unknown): v is Theme {
+  return typeof v === "string" && (THEMES as readonly string[]).includes(v);
+}
 
 function getSystemTheme(): "dark" | "light" {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -17,7 +22,10 @@ function applyTheme(theme: Theme) {
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(() => {
-    return (localStorage.getItem(THEME_KEY) as Theme) ?? "system";
+    const stored = localStorage.getItem(THEME_KEY);
+    // Guard against stale or hand-edited values that would otherwise be
+    // blindly set as `data-theme` and break all CSS custom properties.
+    return isTheme(stored) ? stored : "system";
   });
 
   const setTheme = useCallback((t: Theme) => {
